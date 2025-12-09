@@ -69,6 +69,7 @@ PORT = args.port
 ##################
 
 # Load dotenv
+print(load_dotenv(os.path.join(os.getenv("HOME"), ".env.ml")))
 dataset = load_dataset("e-zorzi/reasoning_distractors_choice")
 
 client = VllmLLM(model_id=MODEL_ID, port=PORT)
