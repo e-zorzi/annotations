@@ -42,7 +42,6 @@ def worker_request(
         reasoning = client.image_text_chat(
             PROMPT_WITH_CLASS_WITH_CHOICES.format(USER_TASK=task, OBJCLASS=obj_cat),
             row["image"],
-            return_metadata=True,
         )
 
         # break due to the tries number
