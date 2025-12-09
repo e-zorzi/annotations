@@ -24,7 +24,7 @@ def worker_request(
     obj_cat = row["object_category"]
 
     # Skip if we have already done this image and task
-    rowid = shortuuid.uuid(name=f"{row['id']}_{task}")
+    rowid = row["id"]
     if rowid in done_rows[split]:
         return (
             mapped_reasoning_and_score[rowid]["reasoning"],
