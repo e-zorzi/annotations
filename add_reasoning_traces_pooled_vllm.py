@@ -69,10 +69,6 @@ PORT = args.port
 ##################
 
 # Load dotenv
-
-with open(os.path.join(".", "all_tasks.json"), "r") as file:
-    all_tasks = json.load(file)
-
 dataset = load_dataset("e-zorzi/reasoning_distractors_choice")
 
 client = VllmLLM(model_id=MODEL_ID, port=PORT)
