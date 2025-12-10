@@ -93,6 +93,9 @@ PROMPT_WITH_CLASS_WITH_CHOICES = (
 # )
 PROMPT_WITH_CLASS_ONLY_SCORE = _TASK_PROMPT_WITH_CLASS + _SCORE_PROMPT
 
+
+PROMPT_WITH_CLASS_ONLY_CHOICES = _TASK_PROMPT_WITH_CLASS + _CHOICE_PROMPT
+
 # PROMPT_ONLY_SCORE = (
 #     "You are a robot navigating an enclosed space. Your goal is to navigate to the correct object based on the user's commands. \
 # You were given the following task by the user '{USER_TASK}'. Currently, you are facing a scene represented by the given image. \
