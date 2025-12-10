@@ -27,7 +27,8 @@ parser = argparse.ArgumentParser("add_reasoning_traces")
 parser.add_argument("--model", required=False, default="Qwen/Qwen2.5-VL-3B-Instruct")
 parser.add_argument("--port", type=int, default=8000)
 parser.add_argument("--ann-type", type=str, default="choice")
-parser.add_argument("--only-ann", type=bool, default=False)
+parser.add_argument("--only-ann", action=argparse.BooleanOptionalAction)
+
 args = parser.parse_args()
 MODEL_ID = args.model
 PORT = args.port
@@ -91,7 +92,10 @@ def worker_request(
     try:
         splitted_reasoning = reasoning.split("<score>")
         score = int(splitted_reasoning[1].rstrip("</score>"))
-        reasoning = splitted_reasoning[0].lstrip("<motivation>").rstrip("</motivation>")
+        if not ONLY_ANNOTATIONS:
+            reasoning = (
+                splitted_reasoning[0].lstrip("<motivation>").rstrip("</motivation>")
+            )
     except:  # noqa
         score = -1
     return (reasoning, score, task, task_refers_to, rowid, False, False)
