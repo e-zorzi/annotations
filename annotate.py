@@ -175,10 +175,10 @@ for SPLIT in dataset:
     if len(new_dataset["reasoning"]) > 0:
         if not ONLY_ANNOTATIONS:
             dataset[SPLIT] = dataset[SPLIT].add_column(
-                f"reasoning_{MODEL_ID}", new_dataset["reasoning"]
+                f"reasoning_{COLUMN_NAME}", new_dataset["reasoning"]
             )
         dataset[SPLIT] = dataset[SPLIT].add_column(
-            f"score_{MODEL_ID}", new_dataset["score"]
+            f"score_{COLUMN_NAME}", new_dataset["score"]
         )
 
 dataset.push_to_hub(dataset_name)
