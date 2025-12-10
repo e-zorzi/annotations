@@ -53,8 +53,6 @@ def worker_request(
         reasoning = splitted_reasoning[0].lstrip("<motivation>").rstrip("</motivation>")
     except:  # noqa
         score = -1
-        # If the score couldn't be parse just return also -1 in the reasoning (so it will be skipped)
-        reasoning = -1
     return (reasoning, score, task, task_refers_to, rowid, False, False)
 
 
