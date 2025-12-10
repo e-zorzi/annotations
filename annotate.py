@@ -96,6 +96,8 @@ def worker_request(
             reasoning = (
                 splitted_reasoning[0].lstrip("<motivation>").rstrip("</motivation>")
             )
+        else:
+            reasoning = ""
     except:  # noqa
         score = -1
     return (reasoning, score, task, task_refers_to, rowid, False, False)
