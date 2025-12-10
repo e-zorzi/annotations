@@ -1,5 +1,10 @@
 from LLM import VllmLLM
-from prompts import PROMPT_WITH_CLASS, PROMPT_WITH_CLASS_WITH_CHOICES
+from prompts import (
+    PROMPT_WITH_CLASS,
+    PROMPT_WITH_CLASS_ONLY_SCORE,
+    PROMPT_WITH_CLASS_WITH_CHOICES,
+    PROMPT_WITH_CLASS_ONLY_CHOICES,
+)
 import shortuuid
 from dotenv import load_dotenv
 import os
@@ -17,6 +22,45 @@ N_TASKS = 50
 N_THREADS = 12
 MAX_IMG_PER_CAT = 50
 
+# Parsing argument
+parser = argparse.ArgumentParser("add_reasoning_traces")
+parser.add_argument("--model", required=False, default="Qwen/Qwen2.5-VL-3B-Instruct")
+parser.add_argument("--port", type=int, default=8000)
+parser.add_argument("--ann-type", type=str, default="choice")
+parser.add_argument("--only-ann", type=bool, default=False)
+args = parser.parse_args()
+MODEL_ID = args.model
+PORT = args.port
+ANN_TYPE = args.ann_type
+assert ANN_TYPE in ["choice", "score"]
+ONLY_ANNOTATIONS = args.only_ann
+
+if MODEL_ID == "Qwen/Qwen2.5-VL-3B-Instruct":
+    COLUMN_NAME = "Qwen/Qwen2.5-VL-3B-Instruct-base"
+elif MODEL_ID == "Qwen/Qwen2.5-VL-7B-Instruct":
+    COLUMN_NAME = "Qwen/Qwen2.5-VL-7B-Instruct-base"
+else:
+    COLUMN_NAME = MODEL_ID
+if ONLY_ANNOTATIONS:
+    COLUMN_NAME += "-noreasoning"
+##################
+
+## Prompt handling
+if ANN_TYPE == "choice":
+    _prompt = (
+        PROMPT_WITH_CLASS_WITH_CHOICES
+        if not ONLY_ANNOTATIONS
+        else PROMPT_WITH_CLASS_ONLY_CHOICES
+    )
+elif ANN_TYPE == "score":
+    _prompt = (
+        PROMPT_WITH_CLASS if not ONLY_ANNOTATIONS else PROMPT_WITH_CLASS_ONLY_SCORE
+    )
+assert r"{OBJCLASS}" in _prompt
+assert ANN_TYPE != "choice" or "<score>0, 1, or 2</score>" in _prompt
+assert ANN_TYPE != "score" or "return a score from 1 to 5" in _prompt
+##################
+
 
 def worker_request(
     task, task_refers_to, row, done_rows, mapped_reasoning_and_score, split, client
@@ -25,27 +69,12 @@ def worker_request(
 
     # Skip if we have already done this image and task
     rowid = row["id"]
-    if rowid in done_rows[split]:
-        return (
-            mapped_reasoning_and_score[rowid]["reasoning"],
-            mapped_reasoning_and_score[rowid]["score"],
-            task,
-            task_refers_to,
-            rowid,
-            False,
-            True,
-        )
 
-    tries = 0
-    while tries < MAX_TRIES:
-        # No try as in this case we want the app to crash (should not raise any exception)
-        reasoning = client.image_text_chat(
-            PROMPT_WITH_CLASS_WITH_CHOICES.format(USER_TASK=task, OBJCLASS=obj_cat),
-            row["image"],
-        )
-
-        # break due to the tries number
-        tries = MAX_TRIES + 10
+    # No try as in this case we want the app to crash (should not raise any exception)
+    reasoning = client.image_text_chat(
+        _prompt.format(USER_TASK=task, OBJCLASS=obj_cat),
+        row["image"],
+    )
 
     try:
         splitted_reasoning = reasoning.split("<score>")
@@ -56,18 +85,15 @@ def worker_request(
     return (reasoning, score, task, task_refers_to, rowid, False, False)
 
 
-# Parsing argument
-parser = argparse.ArgumentParser("add_reasoning_traces")
-parser.add_argument("--model", required=False, default="Qwen/Qwen2.5-VL-3B-Instruct")
-parser.add_argument("--port", type=int, default=8000)
-args = parser.parse_args()
-MODEL_ID = args.model
-PORT = args.port
-##################
-
 # Load dotenv
 print(load_dotenv(os.path.join(os.getenv("HOME"), ".env.ml")))
-dataset = load_dataset("e-zorzi/reasoning_distractors_choice")
+
+dataset_name = (
+    "e-zorzi/reasoning_distractors_choice"
+    if ANN_TYPE == "choice"
+    else "e-zorzi/reasoning_distractors"
+)
+dataset = load_dataset(dataset_name)
 
 client = VllmLLM(model_id=MODEL_ID, port=PORT)
 
@@ -138,4 +164,4 @@ for SPLIT in dataset:
             f"score_{MODEL_ID}", new_dataset["score"]
         )
 
-dataset.push_to_hub("e-zorzi/reasoning_distractors_choice")
+dataset.push_to_hub(dataset_name)
