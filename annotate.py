@@ -62,6 +62,12 @@ elif ANN_TYPE == "score":
 assert r"{OBJCLASS}" in _prompt
 assert ANN_TYPE != "choice" or "<score>0, 1, or 2</score>" in _prompt
 assert ANN_TYPE != "score" or "return a score from 1 to 5" in _prompt
+assert (
+    not ONLY_ANNOTATIONS
+    or "if the task is 'Navigate to the black leather sofa near a lampstand' your reasoning process will be 'I'm currently"
+    not in _prompt
+)
+
 ##################
 
 
@@ -160,9 +166,10 @@ for SPLIT in dataset:
 
     # Otherwise ValueError
     if len(new_dataset["reasoning"]) > 0:
-        dataset[SPLIT] = dataset[SPLIT].add_column(
-            f"reasoning_{MODEL_ID}", new_dataset["reasoning"]
-        )
+        if not ONLY_ANNOTATIONS:
+            dataset[SPLIT] = dataset[SPLIT].add_column(
+                f"reasoning_{MODEL_ID}", new_dataset["reasoning"]
+            )
         dataset[SPLIT] = dataset[SPLIT].add_column(
             f"score_{MODEL_ID}", new_dataset["score"]
         )
