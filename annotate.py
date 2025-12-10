@@ -45,6 +45,9 @@ if ONLY_ANNOTATIONS:
     COLUMN_NAME += "-noreasoning"
 ##################
 
+print(
+    f"Type of annotations: {ANN_TYPE}, only annotations: {ONLY_ANNOTATIONS}, model: {MODEL_ID}\nColumn name: {COLUMN_NAME}"
+)
 ## Prompt handling
 if ANN_TYPE == "choice":
     _prompt = (
