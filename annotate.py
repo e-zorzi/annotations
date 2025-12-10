@@ -48,6 +48,7 @@ if ONLY_ANNOTATIONS:
 print(
     f"Type of annotations: {ANN_TYPE}, only annotations: {ONLY_ANNOTATIONS}, model: {MODEL_ID}\nColumn name: {COLUMN_NAME}"
 )
+
 ## Prompt handling
 if ANN_TYPE == "choice":
     _prompt = (
@@ -67,6 +68,8 @@ assert (
     or "if the task is 'Navigate to the black leather sofa near a lampstand' your reasoning process will be 'I'm currently"
     not in _prompt
 )
+
+print(f"\n{_prompt}\n")
 
 ##################
 
