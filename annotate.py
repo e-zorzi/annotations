@@ -38,12 +38,14 @@ ONLY_ANNOTATIONS = args.only_ann
 
 if MODEL_ID == "Qwen/Qwen2.5-VL-3B-Instruct":
     COLUMN_NAME = "Qwen/Qwen2.5-VL-3B-Instruct-base"
+    if ONLY_ANNOTATIONS:
+        COLUMN_NAME += "-noreasoning"
 elif MODEL_ID == "Qwen/Qwen2.5-VL-7B-Instruct":
     COLUMN_NAME = "Qwen/Qwen2.5-VL-7B-Instruct-base"
+    if ONLY_ANNOTATIONS:
+        COLUMN_NAME += "-noreasoning"
 else:
     COLUMN_NAME = MODEL_ID
-if ONLY_ANNOTATIONS:
-    COLUMN_NAME += "-noreasoning"
 ##################
 
 print(
