@@ -1,3 +1,4 @@
+from google import genai
 import os
 from abc import ABC, abstractmethod
 import base64
@@ -5,6 +6,8 @@ from io import BytesIO
 import openai
 from attrs import define, field
 from typing import Optional
+import numpy as np
+from PIL import Image
 
 # Per request. The maximum daily spend (in terms of input tokens) will be
 # ((N_tokens / 1_000_000) * RPD * price_per_1M) e.g. for Gemini2.5-pro,
@@ -41,18 +44,33 @@ class OpenAILLM(IRemoteLLM):
     model_id: str
     api_key: str = None
     _url: str = field(default="https://api.openai.com/v1")
-    _client: openai.OpenAI = None
     _delay: float = field(default=0.1)
-    _temperature: float = field(default=1.0)
-    _top_p: float = field(default=0.95)
+    temperature: float = field(default=1.0)
+    top_p: float = field(default=0.95)
+    max_output_length: int = field(default=12000)
 
     def __attrs_post_init__(self):
         if self.api_key is None:
             self.api_key = os.getenv("OPENAI_API_KEY")
-        if self._client is None:
-            self._client = openai.OpenAI(api_key=self.api_key, base_url=self._url)
+        self._client = openai.OpenAI(api_key=self.api_key, base_url=self._url)
 
-    def image_text_chat(self, prompt, image):
+    def image_text_chat(
+        self,
+        prompt,
+        image,
+    ):
+        # Handle arrays
+        if isinstance(image, np.ndarray):
+            image = Image.fromarray(image)
+            image_format = "png"
+        else:
+            image_format = image.format
+
+        if image_format is None or image_format == "None":
+            raise ValueError(
+                "Wrong image format. I got 'None'. Check how you constructed the image."
+            )
+
         # Safety checks
         height, width = image.size
         if height > _SAFEGUARD_IMAGE_RESOLUTION or width > _SAFEGUARD_IMAGE_RESOLUTION:
@@ -90,6 +108,9 @@ class OpenAILLM(IRemoteLLM):
                     ],
                 }
             ],
+            temperature=self.temperature,
+            top_p=self.top_p,
+            max_tokens=int(self.max_output_length / 4),
             stream=True,
         )
         stringbuilder = ""
@@ -101,7 +122,10 @@ class OpenAILLM(IRemoteLLM):
 
         return stringbuilder
 
-    def text_chat(self, prompt):
+    def text_chat(
+        self,
+        prompt,
+    ):
         if len(prompt) > _SAFEGUARD_N_LETTERS:
             print(
                 f"!! Warning !! The passed prompt has length {len(prompt)}, greater than the maximum allowed: {_SAFEGUARD_N_LETTERS}. It will be truncated accordingly."
@@ -120,6 +144,9 @@ class OpenAILLM(IRemoteLLM):
                     ],
                 }
             ],
+            temperature=self.temperature,
+            top_p=self.top_p,
+            max_tokens=int(self.max_output_length / 4),
             stream=True,
         )
         stringbuilder = ""
@@ -141,5 +168,22 @@ class VllmLLM(OpenAILLM):
     def __attrs_post_init__(self):
         if self._url is None:
             self._url = f"http://localhost:{self._port}/v1"
-        if self._client is None:
-            self._client = openai.OpenAI(api_key=self.api_key, base_url=self._url)
+
+        self._client = openai.OpenAI(api_key=self.api_key, base_url=self._url)
+
+
+## Need to think about if it is worth implementing this, to avoid requiring a VLLM dependency
+# @define(kw_only=True, auto_attribs=True)
+# class VllmOfflineLLM(IRemoteLLM):
+#     model_id: str
+#     temperature: float = field(default=1.0)
+#     top_p: float = field(default=0.95)
+
+#     def __attrs_post_init__(self):
+#         #self._sampling_params =
+
+#     def text_chat(self, prompt):
+#         return super().text_chat(prompt, )
+
+#     def image_text_chat(self, prompt, image, **kwargs):
+#         return super().image_text_chat(prompt, image, **kwargs)

@@ -17,6 +17,8 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from collections import defaultdict
 
+MAX_OUTPUT_LENGTH = 1000
+
 MAX_TRIES = 10
 N_TASKS = 50
 N_THREADS = 12
@@ -28,6 +30,8 @@ parser.add_argument("--model", required=False, default="Qwen/Qwen2.5-VL-3B-Instr
 parser.add_argument("--port", type=int, default=8000)
 parser.add_argument("--ann-type", type=str, default="choice")
 parser.add_argument("--only-ann", action=argparse.BooleanOptionalAction)
+parser.add_argument("--column-name", type=str, default="")
+
 
 args = parser.parse_args()
 MODEL_ID = args.model
@@ -35,17 +39,19 @@ PORT = args.port
 ANN_TYPE = args.ann_type
 assert ANN_TYPE in ["choice", "score"]
 ONLY_ANNOTATIONS = args.only_ann
+COLUMN_NAME = args.column_name
 
-if MODEL_ID == "Qwen/Qwen2.5-VL-3B-Instruct":
-    COLUMN_NAME = "Qwen/Qwen2.5-VL-3B-Instruct-base"
-    if ONLY_ANNOTATIONS:
-        COLUMN_NAME += "-noreasoning"
-elif MODEL_ID == "Qwen/Qwen2.5-VL-7B-Instruct":
-    COLUMN_NAME = "Qwen/Qwen2.5-VL-7B-Instruct-base"
-    if ONLY_ANNOTATIONS:
-        COLUMN_NAME += "-noreasoning"
-else:
-    COLUMN_NAME = MODEL_ID
+if COLUMN_NAME == "":
+    if MODEL_ID == "Qwen/Qwen2.5-VL-3B-Instruct":
+        COLUMN_NAME = "Qwen/Qwen2.5-VL-3B-Instruct-base"
+        if ONLY_ANNOTATIONS:
+            COLUMN_NAME += "-noreasoning"
+    elif MODEL_ID == "Qwen/Qwen2.5-VL-7B-Instruct":
+        COLUMN_NAME = "Qwen/Qwen2.5-VL-7B-Instruct-base"
+        if ONLY_ANNOTATIONS:
+            COLUMN_NAME += "-noreasoning"
+    else:
+        COLUMN_NAME = MODEL_ID
 ##################
 
 print(
@@ -102,6 +108,8 @@ def worker_request(
             reasoning = ""
     except:  # noqa
         score = -1
+    if len(reasoning) > MAX_OUTPUT_LENGTH:
+        reasoning = f"{reasoning[:MAX_OUTPUT_LENGTH]}<TRUNCATED>"
     return (reasoning, score, task, task_refers_to, rowid, False, False)
 
 
@@ -115,7 +123,7 @@ dataset_name = (
 )
 dataset = load_dataset(dataset_name)
 
-client = VllmLLM(model_id=MODEL_ID, port=PORT)
+client = VllmLLM(model_id=MODEL_ID, port=PORT, max_output_length=MAX_OUTPUT_LENGTH)
 
 for SPLIT in dataset:
     new_dataset = dict(reasoning=[], score=[])
