@@ -87,7 +87,8 @@ def worker_request(
     task, task_refers_to, row, done_rows, mapped_reasoning_and_score, split, client
 ):
     obj_cat = row["object_category"]
-
+    _gt_score = row["score"]
+    _gt_reasoning = row["reasoning"]
     # Skip if we have already done this image and task
     rowid = row["id"]
 
@@ -113,7 +114,17 @@ def worker_request(
         score = -1
     if len(reasoning) > MAX_OUTPUT_LENGTH:
         reasoning = f"{reasoning[:MAX_OUTPUT_LENGTH]}<TRUNCATED>"
-    return (reasoning, score, task, task_refers_to, rowid, False, False)
+    return (
+        reasoning,
+        score,
+        task,
+        task_refers_to,
+        rowid,
+        _gt_score,
+        _gt_reasoning,
+        False,
+        False,
+    )
 
 
 # Load dotenv
@@ -177,6 +188,8 @@ for _ in tqdm(range(N_TRIES)):
                             task,
                             task_refers_to,
                             rowid,
+                            gt_score,
+                            gt_reasoning,
                             many_errors,
                             already_done,
                         ) = f.result()
@@ -193,6 +206,12 @@ for _ in tqdm(range(N_TRIES)):
                         if "score" not in LOCAL_DATASET[SPLIT][rowid]:
                             LOCAL_DATASET[SPLIT][rowid]["score"] = []
                         LOCAL_DATASET[SPLIT][rowid]["score"].append(score)
+
+                        if "gt_score" not in LOCAL_DATASET[SPLIT][rowid]:
+                            LOCAL_DATASET[SPLIT][rowid]["gt_score"] = gt_score
+
+                        if "gt_reasoning" not in LOCAL_DATASET[SPLIT][rowid]:
+                            LOCAL_DATASET[SPLIT][rowid]["gt_reasoning"] = gt_reasoning
 
                 # Just finish the run: too many errors
                 if too_many_errors:
