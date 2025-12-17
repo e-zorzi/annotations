@@ -39,7 +39,9 @@ ONLY_ANNOTATIONS = args.only_ann
 COLUMN_NAME = args.column_name
 
 _LOCAL_FILE_PATH = os.path.join(
-    os.environ["HOME"], "vg-reasoning", f"{MODEL_ID}_{time.time_ns()}.json"
+    os.environ["HOME"],
+    "vg-reasoning",
+    f"{MODEL_ID.replace('/', '-')}.json",
 )
 
 if COLUMN_NAME == "":
