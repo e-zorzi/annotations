@@ -1,4 +1,4 @@
-from LLM import VllmLLM, MockLLM
+from LLM import VllmLLM
 from prompts import (
     PROMPT_WITH_CLASS,
     PROMPT_WITH_CLASS_ONLY_SCORE,
@@ -139,7 +139,7 @@ else:
 
 
 ######### Client
-client = MockLLM(model_id=MODEL_ID, port=PORT, temperature=0.01, max_output_length=1000)
+client = VllmLLM(model_id=MODEL_ID, port=PORT, temperature=1.0, max_output_length=1000)
 for _ in tqdm(range(N_TRIES)):
     for SPLIT in dataset:
         new_dataset = dict(reasoning=[], score=[])
