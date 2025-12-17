@@ -139,7 +139,9 @@ else:
 
 
 ######### Client
-client = VllmLLM(model_id=MODEL_ID, port=PORT, temperature=1.0, max_output_length=1000)
+client = VllmLLM(
+    model_id=MODEL_ID, port=PORT, temperature=1.0, max_output_length=MAX_OUTPUT_LENGTH
+)
 for _ in tqdm(range(N_TRIES)):
     for SPLIT in dataset:
         new_dataset = dict(reasoning=[], score=[])
