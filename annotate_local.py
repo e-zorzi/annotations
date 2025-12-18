@@ -141,6 +141,7 @@ dataset = load_dataset(dataset_name)
 
 ########## Local dataset
 
+print("Local path is: " + _LOCAL_FILE_PATH)
 
 if not os.path.exists(_LOCAL_FILE_PATH):
     LOCAL_DATASET = dict()
