@@ -15,7 +15,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from collections import defaultdict
 
-MAX_OUTPUT_LENGTH = 1000
+MAX_OUTPUT_LENGTH = 1200
 
 N_TRIES = 5
 N_THREADS = 12
